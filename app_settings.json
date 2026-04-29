@@ -1,0 +1,8 @@
+{
+    "dark_mode": true,
+    "sound_paths": {
+        "36": "sounds/kick.wav",
+        "38": "sounds/snare.wav",
+        "42": "sounds/hihat.wav"
+    }
+}
