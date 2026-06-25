@@ -1,7 +1,19 @@
 import time
 import threading
 import os
-import playsound3
+
+try:
+    import winsound
+    _use_winsound = True
+except ImportError:
+    _use_winsound = False
+    import playsound3
+
+def _play_sound_async(path):
+    if _use_winsound:
+        winsound.PlaySound(path, winsound.SND_ASYNC)
+    else:
+        playsound3.playsound(path, block=False)
 
 NOTE_KICK = 36
 NOTE_SNARE = 38
@@ -32,8 +44,7 @@ class MidiPlayer:
     def send_note(self, note):
         path = self.samples.get(note)
         if path:
-            # non-blocking playback
-            playsound3.playsound(path, block=False)
+            _play_sound_async(path)
 
     def play_pattern(self, pattern, bpm):
         if self.playing:
@@ -47,16 +58,25 @@ class MidiPlayer:
         print(step_time)
 
         def run():
+            import time
+            start_time = time.perf_counter()
+            step_index = 0
             while self.playing:
-                for step in range(steps):
-                    
-                    if not self.playing:
-                        break
-                    for note, c in events:
-                        if c == step:
-                            print(f"Playing step {step}")
-                            self.send_note(note)
-                    time.sleep(step_time)
+                target_time = start_time + step_index * step_time
+                now = time.perf_counter()
+                if now < target_time:
+                    # Sleep most of the time, then busy-wait for final microseconds
+                    time.sleep(max(0, target_time - now - 0.001))  # leave 1ms for busy-wait
+                    # Busy-wait for remaining time
+                    while time.perf_counter() < target_time:
+                        pass
+                if not self.playing:
+                    break
+                step = step_index % steps
+                for note, c in events:
+                    if c == step:
+                        self.send_note(note)
+                step_index += 1
 
         self.thread = threading.Thread(target=run)
         self.thread.start()

@@ -24,7 +24,7 @@ class DrumApp:
         self.patterns.append(self.current_pattern)
         self.bpm = 120
         self.player = MidiPlayer()
-        self.steps_options = [16, 32, 64]
+        self.steps_options = [6, 7, 8, 12, 16, 32, 64]
         self.settings_window = SettingsWindow(self)
         
         # Load saved sound paths
@@ -75,7 +75,7 @@ class DrumApp:
         # Step selector
         self.step_selector = ft.Dropdown(
             options=[ft.dropdown.Option(str(s)) for s in self.steps_options],
-            value=str(self.steps_options[0]),
+            value="16",
             on_select=self.change_steps,
             width=200,
             text_size=16
